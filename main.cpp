@@ -21,6 +21,7 @@ using namespace glm;
 #include "headers/objloader.hpp"
 //#include "../common/vboindexer.hpp"
 
+
 int main( void )
 {
     // Initialise GLFW
@@ -79,46 +80,91 @@ int main( void )
 	GLuint VertexArrayID;
 	glGenVertexArrays(1, &VertexArrayID);
 	glBindVertexArray(VertexArrayID);
-
+	
 	// Create and compile our GLSL program from the shaders
 	GLuint programID = LoadShaders( "shaders/StandardShading.vertexshader", "shaders/StandardShading.fragmentshader" );
-
+	printf("Hey reached here!\n");
 	// Get a handle for our "MVP" uniform
 	GLuint MatrixID = glGetUniformLocation(programID, "MVP");
 	GLuint ViewMatrixID = glGetUniformLocation(programID, "V");
 	GLuint ModelMatrixID = glGetUniformLocation(programID, "M");
-
-	// Load the texture
-	GLuint Texture = loadDDS("static/textures/texture8.DDS");
-	//GLuint Texture = loadBMP_custom("texture2.BMP");
-	//GLuint Texture = LoadTexture("texture2.BMP");
-
-	// Get a handle for our "myTextureSampler" uniform
-	GLuint TextureID  = glGetUniformLocation(programID, "myTextureSampler");
-
+	
+	
 	// Read our .obj file
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec2> uvs;
 	std::vector<glm::vec3> normals;
-	bool res = loadOBJ("static/mesh/sample3.obj", vertices, uvs, normals);
+	
+	all_vertices m_vertices;
+	all_UVs m_uvs;
+	all_normals m_normals;
+
+	int t_mesh;
+	
+	//bool res = loadOBJ("static/mesh/sample3.obj", vertices, uvs, normals);
+	bool res2 = DoTheImportThing("static/mesh/trishapes.obj", t_mesh, m_vertices, m_uvs, m_normals);
+	//printf("Hey reached here!\n");
+	printf("No of meshes %d\n", t_mesh);
+	
+	// Load the texture
+	GLuint Texture[t_mesh];
+	for(int i=0; i<t_mesh; i++)
+	{	
+		//char* filepath = "static/textures/texture" + std::to_string(i) + ".DDS";
+		if (i == 0) 
+		{
+			Texture[i] = loadDDS("static/textures/texture3.dds");
+		}
+		else if (i == 1)
+		{
+			Texture[i] = loadDDS("static/textures/texture2.dds");
+		}
+		else if  (i == 2) 
+		{
+			Texture[i] = loadDDS("static/textures/texture1.dds");
+		}else 
+		{
+			Texture[i] = loadDDS("static/textures/texture4.dds");
+		}
+	}
+
+	// Get a handle for our "myTextureSampler" uniform
+	GLuint TextureID  = glGetUniformLocation(programID, "myTextureSampler");
+
+	vertices = m_vertices[0];
+	uvs = m_uvs[0];
+	normals = m_normals[0];
 
 	// Load it into a VBO
+	GLuint vertexbuffer[t_mesh];
+	for(int i=0; i<t_mesh; i++)
+	{
+		glGenBuffers(1, &vertexbuffer[i]);
+		//printf("%u\n", vertexbuffer[i]);
+		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[i]);
+		glBufferData(GL_ARRAY_BUFFER, m_vertices[i].size() * sizeof(glm::vec3), &m_vertices[i][0], GL_STATIC_DRAW);
+	}
+	
+	
+	GLuint uvbuffer[t_mesh];
+	for(int i=0; i<t_mesh; i++)
+	{
+		glGenBuffers(1, &uvbuffer[i]);
+		//printf("%u\n", uvbuffer[i]);
+		glBindBuffer(GL_ARRAY_BUFFER, uvbuffer[i]);
+		glBufferData(GL_ARRAY_BUFFER, m_uvs[i].size() * sizeof(glm::vec2), &m_uvs[i][0], GL_STATIC_DRAW);
+	}
+	
 
-	GLuint vertexbuffer;
-	glGenBuffers(1, &vertexbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
-
-	GLuint uvbuffer;
-	glGenBuffers(1, &uvbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-	glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(glm::vec2), &uvs[0], GL_STATIC_DRAW);
-
-	GLuint normalbuffer;
-	glGenBuffers(1, &normalbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
-	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
-
+	GLuint normalbuffer[t_mesh];
+	for(int i=0; i<t_mesh; i++)
+	{
+		glGenBuffers(1, &normalbuffer[i]);
+		//printf("%u\n", normalbuffer[i]);
+		glBindBuffer(GL_ARRAY_BUFFER, normalbuffer[i]);
+		glBufferData(GL_ARRAY_BUFFER, m_normals[i].size() * sizeof(glm::vec3), &m_normals[i][0], GL_STATIC_DRAW);
+	}
+	
 	// Get a handle for our "LightPosition" uniform
 	glUseProgram(programID);
 	GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
@@ -144,57 +190,64 @@ int main( void )
 		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
 		glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
 
-		glm::vec3 lightPos = glm::vec3(5,10,15);
+		glm::vec3 lightPos = glm::vec3(0,10, -15);
 		glUniform3f(LightID, lightPos.x, lightPos.y, lightPos.z);
 
-		// Bind our texture in Texture Unit 0
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, Texture);
-		// Set our "myTextureSampler" sampler to use Texture Unit 0
-		glUniform1i(TextureID, 0);
 
-		// 1rst attribute buffer : vertices
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-		glVertexAttribPointer(
-			0,                  // attribute
-			3,                  // size
-			GL_FLOAT,           // type
-			GL_FALSE,           // normalized?
-			0,                  // stride
-			(void*)0            // array buffer offset
-		);
+		//Loop for each of our mesh.
+		for(int i=0; i<t_mesh; i++)
+		{
+			// 1st attribute buffer : vertices
+			glEnableVertexAttribArray(3*i + 0);
+			glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[i]);
+			glVertexAttribPointer(
+				0,                  // attribute
+				3,                  // size
+				GL_FLOAT,           // type
+				GL_FALSE,           // normalized?
+				0,                  // stride
+				(void*)0            // array buffer offset
+			);
 
-		// 2nd attribute buffer : UVs
-		glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-		glVertexAttribPointer(
-			1,                                // attribute
-			2,                                // size
-			GL_FLOAT,                         // type
-			GL_FALSE,                         // normalized?
-			0,                                // stride
-			(void*)0                          // array buffer offset
-		);
+			// 2nd attribute buffer : UVs
+			glEnableVertexAttribArray(3*i + 1);
+			glBindBuffer(GL_ARRAY_BUFFER, uvbuffer[i]);
+			glVertexAttribPointer(
+				1,                                // attribute
+				2,                                // size
+				GL_FLOAT,                         // type
+				GL_FALSE,                         // normalized?
+				0,                                // stride
+				(void*)0                          // array buffer offset
+			);
 
-		// 3rd attribute buffer : normals
-		glEnableVertexAttribArray(2);
-		glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
-		glVertexAttribPointer(
-			2,                                // attribute
-			3,                                // size
-			GL_FLOAT,                         // type
-			GL_FALSE,                         // normalized?
-			0,                                // stride
-			(void*)0                          // array buffer offset
-		);
+			// 3rd attribute buffer : normals
+			glEnableVertexAttribArray(3*i + 2);
+			glBindBuffer(GL_ARRAY_BUFFER, normalbuffer[i]);
+			glVertexAttribPointer(
+				2,                                // attribute
+				3,                                // size
+				GL_FLOAT,                         // type
+				GL_FALSE,                         // normalized?
+				0,                                // stride
+				(void*)0                          // array buffer offset
+			);
 
-		// Draw the triangles !
-		glDrawArrays(GL_TRIANGLES, 0, vertices.size() );
+			// Bind our texture in Texture Unit 0
+			glActiveTexture(GL_TEXTURE0 + 0);
+			glBindTexture(GL_TEXTURE_2D, Texture[i]);
+			// Set our "myTextureSampler" sampler to use Texture Unit 0
+			glUniform1i(TextureID, 0);
 
-		glDisableVertexAttribArray(0);
-		glDisableVertexAttribArray(1);
-		glDisableVertexAttribArray(2);
+			// Draw the triangles !
+			printf("Hey reached here!");
+			glDrawArrays(GL_TRIANGLES, 0, m_vertices[i].size());
+			
+
+			glDisableVertexAttribArray(3*i + 1);
+			glDisableVertexAttribArray(3*i + 2);
+			glDisableVertexAttribArray(3*i + 3);
+		}
 
 		// Swap buffers
 		glfwSwapBuffers(window);
@@ -205,16 +258,21 @@ int main( void )
 		   glfwWindowShouldClose(window) == 0 );
 
 	// Cleanup VBO and shader
-	glDeleteBuffers(1, &vertexbuffer);
-	glDeleteBuffers(1, &uvbuffer);
-	glDeleteBuffers(1, &normalbuffer);
+	for(int i=0; i<t_mesh; i++)
+	{
+		glDeleteBuffers(1, &vertexbuffer[i]);
+		glDeleteBuffers(1, &uvbuffer[i]);
+		glDeleteBuffers(1, &normalbuffer[i]);
+		glDeleteTextures(1, &Texture[i]);
+	}
+
+	
 	glDeleteProgram(programID);
-	glDeleteTextures(1, &Texture);
+	
 	glDeleteVertexArrays(1, &VertexArrayID);
 
 	// Close OpenGL window and terminate GLFW
 	glfwTerminate();
-
 
     return 0;
 }
