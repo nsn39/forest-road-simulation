@@ -83,7 +83,7 @@ int main( void )
 	
 	// Create and compile our GLSL program from the shaders
 	GLuint programID = LoadShaders( "shaders/StandardShading.vertexshader", "shaders/StandardShading.fragmentshader" );
-	printf("Hey reached here!\n");
+	//printf("Hey reached here!\n");
 	// Get a handle for our "MVP" uniform
 	GLuint MatrixID = glGetUniformLocation(programID, "MVP");
 	GLuint ViewMatrixID = glGetUniformLocation(programID, "V");
@@ -140,7 +140,7 @@ int main( void )
 	for(int i=0; i<t_mesh; i++)
 	{
 		glGenBuffers(1, &vertexbuffer[i]);
-		//printf("%u\n", vertexbuffer[i]);
+		printf("%u\n", vertexbuffer[i]);
 		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[i]);
 		glBufferData(GL_ARRAY_BUFFER, m_vertices[i].size() * sizeof(glm::vec3), &m_vertices[i][0], GL_STATIC_DRAW);
 	}
@@ -150,7 +150,7 @@ int main( void )
 	for(int i=0; i<t_mesh; i++)
 	{
 		glGenBuffers(1, &uvbuffer[i]);
-		//printf("%u\n", uvbuffer[i]);
+		printf("%u\n", uvbuffer[i]);
 		glBindBuffer(GL_ARRAY_BUFFER, uvbuffer[i]);
 		glBufferData(GL_ARRAY_BUFFER, m_uvs[i].size() * sizeof(glm::vec2), &m_uvs[i][0], GL_STATIC_DRAW);
 	}
@@ -160,7 +160,7 @@ int main( void )
 	for(int i=0; i<t_mesh; i++)
 	{
 		glGenBuffers(1, &normalbuffer[i]);
-		//printf("%u\n", normalbuffer[i]);
+		printf("%u\n", normalbuffer[i]);
 		glBindBuffer(GL_ARRAY_BUFFER, normalbuffer[i]);
 		glBufferData(GL_ARRAY_BUFFER, m_normals[i].size() * sizeof(glm::vec3), &m_normals[i][0], GL_STATIC_DRAW);
 	}
@@ -190,7 +190,7 @@ int main( void )
 		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
 		glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
 
-		glm::vec3 lightPos = glm::vec3(0,10, -15);
+		glm::vec3 lightPos = glm::vec3(0,5, -5);
 		glUniform3f(LightID, lightPos.x, lightPos.y, lightPos.z);
 
 
@@ -198,7 +198,7 @@ int main( void )
 		for(int i=0; i<t_mesh; i++)
 		{
 			// 1st attribute buffer : vertices
-			glEnableVertexAttribArray(3*i + 0);
+			glEnableVertexAttribArray(0);
 			glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[i]);
 			glVertexAttribPointer(
 				0,                  // attribute
@@ -210,7 +210,7 @@ int main( void )
 			);
 
 			// 2nd attribute buffer : UVs
-			glEnableVertexAttribArray(3*i + 1);
+			glEnableVertexAttribArray(1);
 			glBindBuffer(GL_ARRAY_BUFFER, uvbuffer[i]);
 			glVertexAttribPointer(
 				1,                                // attribute
@@ -222,7 +222,7 @@ int main( void )
 			);
 
 			// 3rd attribute buffer : normals
-			glEnableVertexAttribArray(3*i + 2);
+			glEnableVertexAttribArray(2);
 			glBindBuffer(GL_ARRAY_BUFFER, normalbuffer[i]);
 			glVertexAttribPointer(
 				2,                                // attribute
@@ -240,13 +240,13 @@ int main( void )
 			glUniform1i(TextureID, 0);
 
 			// Draw the triangles !
-			printf("Hey reached here!");
+			//printf("Hey reached here!");
 			glDrawArrays(GL_TRIANGLES, 0, m_vertices[i].size());
 			
-
-			glDisableVertexAttribArray(3*i + 1);
-			glDisableVertexAttribArray(3*i + 2);
-			glDisableVertexAttribArray(3*i + 3);
+			glBindTexture(GL_TEXTURE_2D, 0);
+			glDisableVertexAttribArray(0);
+			glDisableVertexAttribArray(1);
+			glDisableVertexAttribArray(2);
 		}
 
 		// Swap buffers

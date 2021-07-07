@@ -39,7 +39,7 @@ void main(){
 	//  - light is at the vertical of the triangle -> 1
 	//  - light is perpendicular to the triangle -> 0
 	//  - light is behind the triangle -> 0
-	float cosTheta = clamp( dot( n,l ), 0,1 );
+	float cosTheta = clamp( dot( l,n ), 0,1 );
 	
 	// Eye vector (towards the camera)
 	vec3 E = normalize(EyeDirection_cameraspace);
