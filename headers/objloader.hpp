@@ -31,7 +31,8 @@ bool DoTheImportThing(
 	int & no_meshes,
 	all_vertices & out_vertices,
 	all_UVs & out_uvs,
-	all_normals & out_normals
+	all_normals & out_normals,
+	std::vector<std::string> & name_list
 );
 
 #endif

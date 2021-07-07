@@ -114,7 +114,8 @@ bool DoTheImportThing(
 	int & no_meshes,
 	all_vertices & out_vertices,
 	all_UVs & out_uvs,
-	all_normals & out_normals
+	all_normals & out_normals,
+	std::vector<std::string> & name_list
 ) {
 	// Create an instance of the Importer class
 	Assimp::Importer importer;
@@ -142,7 +143,7 @@ bool DoTheImportThing(
 	//printf("The no of textures: %d\n", tsize);
 
 	aiMesh** meshes = scene->mMeshes;
-
+	
 
 	//Iterate for each mesh and add it to our data structure.
 	for(int i=0; i<size; i++)
@@ -150,6 +151,11 @@ bool DoTheImportThing(
 		aiMesh* temp = meshes[i];
 		//unsigned int x = (temp->GetNumUVChannels());
 		unsigned int y = temp->mNumVertices;
+		
+		//char* mesh_name = const_cast<char*>(temp->mName.C_Str());
+		std::string m_name = std::string(temp->mName.C_Str());
+		name_list.push_back(m_name);
+		
 		//printf("%d Vertices %d object\n", temp->mNumVertices, i);
 
 		std::vector<glm::vec3> mesh_i_vertices;

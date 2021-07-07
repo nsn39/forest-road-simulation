@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
+#include <iostream>
 
 // Include GLEW
 #include <GL/glew.h>
@@ -98,11 +99,11 @@ int main( void )
 	all_vertices m_vertices;
 	all_UVs m_uvs;
 	all_normals m_normals;
+	std::vector<std::string> name_list;
 
 	int t_mesh;
 	
-	//bool res = loadOBJ("static/mesh/sample3.obj", vertices, uvs, normals);
-	bool res2 = DoTheImportThing("static/mesh/trishapes.obj", t_mesh, m_vertices, m_uvs, m_normals);
+	bool res2 = DoTheImportThing("static/mesh/basic-forest2.obj", t_mesh, m_vertices, m_uvs, m_normals, name_list);
 	//printf("Hey reached here!\n");
 	printf("No of meshes %d\n", t_mesh);
 	
@@ -110,21 +111,25 @@ int main( void )
 	GLuint Texture[t_mesh];
 	for(int i=0; i<t_mesh; i++)
 	{	
-		//char* filepath = "static/textures/texture" + std::to_string(i) + ".DDS";
-		if (i == 0) 
+		std::cout << name_list[i] << std::endl;
+		if (name_list[i].compare(0,4,"Tree") == 0)
 		{
-			Texture[i] = loadDDS("static/textures/texture3.dds");
+			Texture[i] = loadDDS("static/textures/Tree.dds");
 		}
-		else if (i == 1)
+		else if (name_list[i].compare(0,4,"stem") == 0)
 		{
-			Texture[i] = loadDDS("static/textures/texture2.dds");
+			Texture[i] = loadDDS("static/textures/stem.dds");
 		}
-		else if  (i == 2) 
+		else if (name_list[i].compare(0,4,"Road") == 0)
 		{
+			Texture[i] = loadDDS("static/textures/Road.dds");
+		}
+		else if (name_list[i].compare(0,4,"Land") == 0)
+		{
+			Texture[i] = loadDDS("static/textures/Land.dds");
+		}
+		else {
 			Texture[i] = loadDDS("static/textures/texture1.dds");
-		}else 
-		{
-			Texture[i] = loadDDS("static/textures/texture4.dds");
 		}
 	}
 
@@ -140,7 +145,7 @@ int main( void )
 	for(int i=0; i<t_mesh; i++)
 	{
 		glGenBuffers(1, &vertexbuffer[i]);
-		printf("%u\n", vertexbuffer[i]);
+		//printf("%u\n", vertexbuffer[i]);
 		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[i]);
 		glBufferData(GL_ARRAY_BUFFER, m_vertices[i].size() * sizeof(glm::vec3), &m_vertices[i][0], GL_STATIC_DRAW);
 	}
@@ -150,7 +155,7 @@ int main( void )
 	for(int i=0; i<t_mesh; i++)
 	{
 		glGenBuffers(1, &uvbuffer[i]);
-		printf("%u\n", uvbuffer[i]);
+		//printf("%u\n", uvbuffer[i]);
 		glBindBuffer(GL_ARRAY_BUFFER, uvbuffer[i]);
 		glBufferData(GL_ARRAY_BUFFER, m_uvs[i].size() * sizeof(glm::vec2), &m_uvs[i][0], GL_STATIC_DRAW);
 	}
@@ -160,7 +165,7 @@ int main( void )
 	for(int i=0; i<t_mesh; i++)
 	{
 		glGenBuffers(1, &normalbuffer[i]);
-		printf("%u\n", normalbuffer[i]);
+		//printf("%u\n", normalbuffer[i]);
 		glBindBuffer(GL_ARRAY_BUFFER, normalbuffer[i]);
 		glBufferData(GL_ARRAY_BUFFER, m_normals[i].size() * sizeof(glm::vec3), &m_normals[i][0], GL_STATIC_DRAW);
 	}
@@ -190,7 +195,7 @@ int main( void )
 		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
 		glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
 
-		glm::vec3 lightPos = glm::vec3(0,5, -5);
+		glm::vec3 lightPos = glm::vec3(0,50, -5);
 		glUniform3f(LightID, lightPos.x, lightPos.y, lightPos.z);
 
 
@@ -265,7 +270,6 @@ int main( void )
 		glDeleteBuffers(1, &normalbuffer[i]);
 		glDeleteTextures(1, &Texture[i]);
 	}
-
 	
 	glDeleteProgram(programID);
 	
