@@ -7,10 +7,6 @@
 // Include GLEW
 #include <GL/glew.h>
 
-// Include GLFW
-#include <GLFW/glfw3.h>
-GLFWwindow* window;
-
 // Include GLM
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -20,55 +16,18 @@ using namespace glm;
 #include "headers/texture.hpp"
 #include "headers/controls.hpp"
 #include "headers/objloader.hpp"
+#include "headers/glfw.hpp"
 //#include "../common/vboindexer.hpp"
 
+GLFWwindow* window;
 
 int main( void )
-{
-    // Initialise GLFW
-	if( !glfwInit() )
-	{
-		fprintf( stderr, "Failed to initialize GLFW\n" );
-		getchar();
-		return -1;
-	}
-
-	glfwWindowHint(GLFW_SAMPLES, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-	// Open a window and create its OpenGL context
-	window = glfwCreateWindow( 1366, 768, "Project Demo", NULL, NULL);
-	if( window == NULL ){
-		fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
-		getchar();
-		glfwTerminate();
-		return -1;
-	}
-	glfwMakeContextCurrent(window);
-
-	// Initialize GLEW
-	glewExperimental = true; // Needed for core profile
-	if (glewInit() != GLEW_OK) {
-		fprintf(stderr, "Failed to initialize GLEW\n");
-		getchar();
-		glfwTerminate();
-		return -1;
-	}
-
-	// Ensure we can capture the escape key being pressed below
-	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-    // Hide the mouse and enable unlimited mouvement
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    
-    // Set the mouse at the center of the screen
-    glfwPollEvents();
-    glfwSetCursorPos(window, 1366/2, 768/2);
+{	
+	//Initialize a GLFW Window
+	window = glfw_init();
 
 	// Dark blue background
-	glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
+	glClearColor(0.529f, 0.807f, 0.921f, 0.0f);
 
 	// Enable depth test
 	glEnable(GL_DEPTH_TEST);
@@ -103,7 +62,7 @@ int main( void )
 
 	int t_mesh;
 	
-	bool res2 = DoTheImportThing("static/mesh/basic-forest2.obj", t_mesh, m_vertices, m_uvs, m_normals, name_list);
+	bool res2 = DoTheImportThing("static/mesh/basic_forest_2_exp.obj", t_mesh, m_vertices, m_uvs, m_normals, name_list);
 	//printf("Hey reached here!\n");
 	printf("No of meshes %d\n", t_mesh);
 	
@@ -112,9 +71,9 @@ int main( void )
 	for(int i=0; i<t_mesh; i++)
 	{	
 		std::cout << name_list[i] << std::endl;
-		if (name_list[i].compare(0,4,"Tree") == 0)
+		if (name_list[i].compare(0,4,"Hill") == 0)
 		{
-			Texture[i] = loadDDS("static/textures/Tree.dds");
+			Texture[i] = loadDDS("static/textures/hill.dds");
 		}
 		else if (name_list[i].compare(0,4,"stem") == 0)
 		{
@@ -122,14 +81,18 @@ int main( void )
 		}
 		else if (name_list[i].compare(0,4,"Road") == 0)
 		{
-			Texture[i] = loadDDS("static/textures/Road.dds");
+			Texture[i] = loadDDS("static/textures/road.dds");
 		}
 		else if (name_list[i].compare(0,4,"Land") == 0)
 		{
 			Texture[i] = loadDDS("static/textures/Land.dds");
 		}
+		else if (name_list[i].compare(0,4,"Fenc") == 0)
+		{
+			Texture[i] = loadDDS("static/textures/fence.dds");
+		}
 		else {
-			Texture[i] = loadDDS("static/textures/texture1.dds");
+			Texture[i] = loadDDS("static/textures/stem.dds");
 		}
 	}
 
@@ -276,7 +239,8 @@ int main( void )
 	glDeleteVertexArrays(1, &VertexArrayID);
 
 	// Close OpenGL window and terminate GLFW
-	glfwTerminate();
+	//glfwTerminate();
+	glfw_close();
 
     return 0;
 }

@@ -85,25 +85,25 @@ void computeMatricesFromInputs(){
 	if (glfwGetKey( window, GLFW_KEY_UP ) == GLFW_PRESS){
 		//position += direction * deltaTime * speed;
 		//verticalAngle -= 0.01f;
-		pos += glm::vec3(1,0,0);
+		pos += glm::vec3(0.2,0,0);
 	}
 	// Move backward
 	if (glfwGetKey( window, GLFW_KEY_DOWN ) == GLFW_PRESS){
 		//position -= direction * deltaTime * speed;
 		//verticalAngle += 0.01f;
-		pos -= glm::vec3(1,0,0);
+		pos -= glm::vec3(0.2,0,0);
 	}
 	// Strafe right
 	if (glfwGetKey( window, GLFW_KEY_RIGHT ) == GLFW_PRESS){
 		position += right * deltaTime * speed;
-		pos += glm::vec3(0,0,1);
+		pos += glm::vec3(0,0,0.2);
 		
 	}
 	// Strafe left
 	if (glfwGetKey( window, GLFW_KEY_LEFT ) == GLFW_PRESS){
 		position -= right * deltaTime * speed;
 		//horizontalAngle += 0.01f;
-		pos -= glm::vec3(0,0,1);
+		pos -= glm::vec3(0,0,0.2);
 	}
 	
 
