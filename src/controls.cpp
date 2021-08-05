@@ -19,6 +19,55 @@ glm::mat4 getProjectionMatrix(){
 	return ProjectionMatrix;
 }
 
+//Computes view matrix from given camera, camera_target and up directions.
+glm::mat4 computeViewMatrix(glm::vec3 from, glm::vec3 to, glm::vec3 temp) 
+{
+	glm::mat4 view_matrix;
+	glm::vec3 forward = glm::normalize(from - to);
+	glm::vec3 right = glm::cross(temp, forward);
+	glm::vec3 up = glm::cross(forward, right);
+
+	view_matrix[0][0] = right.x;
+	view_matrix[1][0] = right.y;
+	view_matrix[2][0] = right.z;
+
+	view_matrix[0][1] = up.x;
+	view_matrix[1][1] = up.y;
+	view_matrix[2][1] = up.z;
+
+	view_matrix[0][2] = forward.x;
+	view_matrix[1][2] = forward.y;
+	view_matrix[2][2] = forward.z;
+
+	view_matrix[3][0] = -glm::dot(right, from);
+	view_matrix[3][1] = -glm::dot(up, from);
+	view_matrix[3][2] = -glm::dot(forward, from);
+
+	view_matrix[0][3] = 0;
+	view_matrix[1][3] = 0;
+	view_matrix[2][3] = 0;
+	view_matrix[3][3] = 1;
+
+	return view_matrix;
+}
+
+//Computes Perspective Projection Matrix from given Field of View angle, aspect_ratio and clipping planes.
+glm::mat4 computeProjectionMatrix(float fov_radians, float aspect_ratio, float z_near, float z_far)
+{	
+	//Right-handed coordinate system.
+	//Creates Perspective projection matrix.
+	const float tanHalfFoV = tan(fov_radians / 2.0f);
+	
+	glm::mat4 result(1.0f);
+	result[0][0] = 1.0f / (aspect_ratio * tanHalfFoV);
+	result[1][1] = 1.0f / (tanHalfFoV);
+	result[2][2] = z_far / (z_near - z_far);
+	result[2][3] = -1.0f;
+	result[3][2] = - (z_far * z_near) / (z_far - z_near);
+	return result;
+}
+
+
 //Initial position for camera
 glm::vec3 pos = glm::vec3(
 	20,
@@ -42,8 +91,8 @@ float mouseSpeed = 0.005f;
 float init_angle = 0.0f;
 
 
-void computeMatricesFromInputs(){
-
+void computeMatricesFromInputs()
+{
 	// glfwGetTime is called only once, the first time this function is called
 	static double lastTime = glfwGetTime();
 
@@ -112,13 +161,15 @@ void computeMatricesFromInputs(){
 	float FoV = initialFoV;// - 5 * glfwGetMouseWheel(); // Now GLFW 3 requires setting up a callback for this. It's a bit too complicated for this beginner's tutorial, so it's disabled instead.
 
 	// Projection matrix : 45� Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-	ProjectionMatrix = glm::perspective(glm::radians(FoV), 4.0f / 3.0f, 0.1f, 100.0f);
+	ProjectionMatrix = computeProjectionMatrix(FoV, 4.0f / 3.0f, 0.1f, 50.0f);
 	// Camera matrix
-	ViewMatrix       = glm::lookAt(
+	ViewMatrix       = computeViewMatrix(
 								pos,          // Camera is here
 								pos_target, // and looks here : at the same position, plus "direction"
-								up                  // Head is up (set to 0,-1,0 to look upside-down)
+								up          // Head is up (set to 0,1,0)
 						   );
+
+
 
 	// For the next frame, the "last time" will be "now"
 	lastTime = currentTime;

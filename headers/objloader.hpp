@@ -11,22 +11,7 @@ typedef std::vector<std::vector<glm::vec3>> all_vertices;
 typedef std::vector<std::vector<glm::vec2>> all_UVs;
 typedef std::vector<std::vector<glm::vec3>> all_normals;
 
-bool loadOBJ(
-	const char * path, 
-	std::vector<glm::vec3> & out_vertices, 
-	std::vector<glm::vec2> & out_uvs, 
-	std::vector<glm::vec3> & out_normals
-);
-
-bool loadAssImp(
-	const char * path, 
-	std::vector<unsigned short> & indices,
-	std::vector<glm::vec3> & vertices,
-	std::vector<glm::vec2> & uvs,
-	std::vector<glm::vec3> & normals
-);
-
-bool DoTheImportThing( 
+bool import_obj_mesh( 
 	const std::string & pFile,
 	int & no_meshes,
 	all_vertices & out_vertices,

@@ -51,6 +51,7 @@ void main(){
 	//  - Looking elsewhere -> < 1
 	float cosAlpha = clamp( dot( E,R ), 0,1 );
 	
+	//Using Phong's Lighting Model.
 	color = 
 		// Ambient : simulates indirect lighting
 		MaterialAmbientColor +

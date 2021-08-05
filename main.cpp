@@ -17,20 +17,36 @@ using namespace glm;
 #include "headers/controls.hpp"
 #include "headers/objloader.hpp"
 #include "headers/glfw.hpp"
-//#include "../common/vboindexer.hpp"
+#include "src/transformations.cpp"
 
 GLFWwindow* window;
 
+glm::mat4 rotation_matrix(float angle)
+{
+    glm::mat4 result(1.0f); //Identity 4x4 matrix.
+    float c = cos(angle);
+    float s = sin(angle);
+
+    result[0][0] = c;
+    result[0][2] = s;
+    result[2][0] = -s;
+    result[2][2] = c;
+
+    return result;
+}
+
 int main( void )
 {	
+
 	//Initialize a GLFW Window
 	window = glfw_init();
 
 	// Dark blue background
 	glClearColor(0.529f, 0.807f, 0.921f, 0.0f);
 
-	// Enable depth test
+	// Enable depth test using Z-buffer algorithm.
 	glEnable(GL_DEPTH_TEST);
+
 	// Accept fragment if it closer to the camera than the former one
 	glDepthFunc(GL_LESS); 
 
@@ -62,7 +78,7 @@ int main( void )
 
 	int t_mesh;
 	
-	bool res2 = DoTheImportThing("static/mesh/basic_forest_2_exp.obj", t_mesh, m_vertices, m_uvs, m_normals, name_list);
+	bool res2 = import_obj_mesh("static/mesh/basic_forest_2_exp.obj", t_mesh, m_vertices, m_uvs, m_normals, name_list);
 	//printf("Hey reached here!\n");
 	printf("No of meshes %d\n", t_mesh);
 	
@@ -136,7 +152,7 @@ int main( void )
 	// Get a handle for our "LightPosition" uniform
 	glUseProgram(programID);
 	GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
-
+	
 	do{
 
 		// Clear the screen
@@ -149,7 +165,7 @@ int main( void )
 		computeMatricesFromInputs();
 		glm::mat4 ProjectionMatrix = getProjectionMatrix();
 		glm::mat4 ViewMatrix = getViewMatrix();
-		glm::mat4 ModelMatrix = glm::mat4(1.0);
+		glm::mat4 ModelMatrix = rotation_matrix_z(1.0f);
 		glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
 		// Send our transformation to the currently bound shader, 
