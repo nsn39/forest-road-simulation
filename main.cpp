@@ -1,3 +1,5 @@
+#define STB_IMAGE_IMPLEMENTATION
+
 // Include standard headers
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,6 +12,7 @@
 // Include GLM
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 using namespace glm;
 
 #include "headers/shader.hpp"
@@ -18,25 +21,58 @@ using namespace glm;
 #include "headers/objloader.hpp"
 #include "headers/glfw.hpp"
 #include "src/transformations.cpp"
+#include "library/stb_image.h"
 
 GLFWwindow* window;
 
-glm::mat4 rotation_matrix(float angle)
-{
-    glm::mat4 result(1.0f); //Identity 4x4 matrix.
-    float c = cos(angle);
-    float s = sin(angle);
-
-    result[0][0] = c;
-    result[0][2] = s;
-    result[2][0] = -s;
-    result[2][2] = c;
-
-    return result;
-}
+unsigned int loadCubemap(std::vector<std::string> faces);
 
 int main( void )
 {	
+	float skyboxVertices[] = {
+        // positions          
+        -1.0f,  1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+
+        -1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+
+         1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+
+        -1.0f, -1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+
+        -1.0f,  1.0f, -1.0f,
+         1.0f,  1.0f, -1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f, -1.0f,
+
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+         1.0f, -1.0f,  1.0f
+    };
 
 	//Initialize a GLFW Window
 	window = glfw_init();
@@ -46,19 +82,20 @@ int main( void )
 
 	// Enable depth test using Z-buffer algorithm.
 	glEnable(GL_DEPTH_TEST);
-
 	// Accept fragment if it closer to the camera than the former one
 	glDepthFunc(GL_LESS); 
-
 	// Cull triangles which normal is not towards the camera
-	glEnable(GL_CULL_FACE);
+	glEnable(GL_CULL_FACE); 
+
+
 
 	GLuint VertexArrayID;
 	glGenVertexArrays(1, &VertexArrayID);
 	glBindVertexArray(VertexArrayID);
 	
 	// Create and compile our GLSL program from the shaders
-	GLuint programID = LoadShaders( "shaders/StandardShading.vertexshader", "shaders/StandardShading.fragmentshader" );
+	GLuint programID = LoadShaders( "shaders/StandardShading.vertexshader", "shaders/StandardShading.fragmentshader");
+	GLuint programID2 = LoadShaders("shaders/skybox.vertexshader", "shaders/skybox.fragmentshader");
 	//printf("Hey reached here!\n");
 	// Get a handle for our "MVP" uniform
 	GLuint MatrixID = glGetUniformLocation(programID, "MVP");
@@ -79,14 +116,37 @@ int main( void )
 	int t_mesh;
 	
 	bool res2 = import_obj_mesh("static/mesh/basic_forest_2_exp.obj", t_mesh, m_vertices, m_uvs, m_normals, name_list);
-	//printf("Hey reached here!\n");
 	printf("No of meshes %d\n", t_mesh);
 	
+	// skybox VAO
+    unsigned int skyboxVAO, skyboxVBO;
+    glGenVertexArrays(1, &skyboxVAO);
+    glGenBuffers(1, &skyboxVBO);
+    glBindVertexArray(skyboxVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+	std::vector<std::string> faces
+    {
+        "static/skybox/right.jpg",
+        "static/skybox/left.jpg",
+        "static/skybox/top.jpg",
+        "static/skybox/bottom.jpg",
+        "static/skybox/front.jpg",
+        "static/skybox/back.jpg"
+    };
+    unsigned int cubemapTexture = loadCubemap(faces);
+	std::string skybox_shader_name = "skybox";
+	glUseProgram(programID2);
+	glUniform1i(glGetUniformLocation(programID2, skybox_shader_name.c_str()), 0);
+
 	// Load the texture
 	GLuint Texture[t_mesh];
 	for(int i=0; i<t_mesh; i++)
 	{	
-		std::cout << name_list[i] << std::endl;
+		//std::cout << name_list[i] << std::endl;
 		if (name_list[i].compare(0,4,"Hill") == 0)
 		{
 			Texture[i] = loadDDS("static/textures/hill.dds");
@@ -112,6 +172,9 @@ int main( void )
 		}
 	}
 
+
+	
+	// Past point
 	// Get a handle for our "myTextureSampler" uniform
 	GLuint TextureID  = glGetUniformLocation(programID, "myTextureSampler");
 
@@ -228,10 +291,26 @@ int main( void )
 			glDrawArrays(GL_TRIANGLES, 0, m_vertices[i].size());
 			
 			glBindTexture(GL_TEXTURE_2D, 0);
-			glDisableVertexAttribArray(0);
-			glDisableVertexAttribArray(1);
-			glDisableVertexAttribArray(2);
+			//glDisableVertexAttribArray(0);
+			//glDisableVertexAttribArray(1);
+			//glDisableVertexAttribArray(2);
+		
 		}
+		// draw skybox as last
+        glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
+        glUseProgram(programID2);
+        glm::mat4 view = glm::mat4(glm::mat3(getViewMatrix())); // remove translation from the view matrix
+        glm::mat4 projection = getProjectionMatrix();
+		glUniformMatrix4fv(glGetUniformLocation(programID2, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(programID2, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        // skybox cube
+        glBindVertexArray(skyboxVAO);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+        glDrawArrays(GL_TRIANGLES, 3, 36);
+        glBindVertexArray(3);
+        glDepthFunc(GL_LESS); // set depth function back to default
+
 
 		// Swap buffers
 		glfwSwapBuffers(window);
@@ -259,4 +338,34 @@ int main( void )
 	glfw_close();
 
     return 0;
+}
+
+unsigned int loadCubemap(std::vector<std::string> faces)
+{
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+    int width, height, nrChannels;
+    for (unsigned int i = 0; i < faces.size(); i++)
+    {
+        unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+        if (data)
+        {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            stbi_image_free(data);
+        }
+        else
+        {
+            std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
+            stbi_image_free(data);
+        }
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    return textureID;
 }
