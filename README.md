@@ -21,6 +21,17 @@ make all
 ./bin/demo
 ```
 
+## Generate Report using LaTeX
+Compile the .tex file using pdflatex and then the .bib file
+
+```bash
+cd latex-files
+pdflatex graphics.tex
+bibtex graphics
+pdflatex graphics.tex
+pdflatex graphics.tex
+
+```
 
 ## Preview
 
